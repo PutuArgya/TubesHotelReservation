@@ -1,9 +1,9 @@
 #ifndef HOTEL_H
 #define HOTEL_H
 
+#include <string>
 using namespace std;
 
-// ===== STRUCTURES =====
 struct Reservation {
     int roomNumber;
     int nights;
@@ -26,8 +26,6 @@ struct Room {
     Room *next;
 };
 
-// ===== FUNCTION DECLARATIONS =====
-
 // User
 void insertUser(string u, string p, bool admin);
 User* login(string u, string p);
@@ -44,5 +42,7 @@ void viewAllReservations();
 // Menu
 void adminMenu();
 void userMenu(User *u);
+
+//Mungkin nambah lagi...
 
 #endif
