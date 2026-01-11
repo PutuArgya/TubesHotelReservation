@@ -13,3 +13,4 @@ UserID,Username,Password,Email,Phone,IsAdmin
 12,Axella,AxellaPass12345,Axella123@gmail.com,888111222333,No
 13,Jauna,JaunaPass,Jauna@gmail.com,222333444555,No
 14,Nawra,NawraAUSPASS,nawraAUS@gmail.com,9991244456,No
+16,Admin,AdminPassword,admin@admin.com,9990002222,Yes

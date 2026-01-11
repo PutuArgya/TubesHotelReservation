@@ -8,21 +8,27 @@ RoomNumber,Type,Price,Available
 107,Family,150,Yes
 108,Single,100,Yes
 109,Deluxe,150,Yes
-110,Single,100,Yes
+110,Single,100,No
 201,Single,100,Yes
 202,Deluxe,150,Yes
 203,Family,150,Yes
-204,Single,100,Yes
+204,Single,100,No
 205,Double,125,Yes
 206,Family,150,Yes
 207,Deluxe,150,Yes
 208,Single,100,Yes
-209,Double,125,Yes
+209,Double,125,No
 210,Family,150,Yes
 301,Junior Suite,175,Yes
 302,Deluxe,150,Yes
-303,Deluxe,150,Yes
+303,Deluxe,150,No
 304,Family,150,Yes
 305,Junior Suite,175,Yes
 306,Single,100,Yes
-307,Test,100,Yes
+307,Single,100,Yes
+308,Deluxe,150,Yes
+309,Family,150,Yes
+310,Family,150,Yes
+401,Suite,250,Yes
+402,Suite,250,Yes
+403,Presidential Suite,500,No

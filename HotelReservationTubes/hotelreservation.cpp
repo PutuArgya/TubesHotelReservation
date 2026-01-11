@@ -29,7 +29,7 @@ adrUser registerUser(listUsers &L, string name, string pass, string email, strin
     return p; 
 }
 
-void insertUser(listUsers &L, adrUser p){
+void insertUser(listUsers &L, adrUser p){ //insertlast
     if (isEmptyUser(L)){
         L.firstUser = p; 
         L.lastUser = p; 
@@ -40,9 +40,9 @@ void insertUser(listUsers &L, adrUser p){
     L.nextUserID++;
 
     exportUsersToCSV(L, "users.csv");
-}
+} 
 
-void removeUser(listUsers &L, listRooms &R, string username){
+void removeUser(listUsers &L, listRooms &R, string username){ //deleteAfter
     if (isEmptyUser(L)){
         cout << "No users in the system!\n";
         return;
@@ -111,7 +111,7 @@ adrUser login(listUsers &L, string name, string pass){
     return nullptr;    
 }
 
-adrUser findUser(listUsers &L, string username){
+adrUser findUser(listUsers &L, string username){ //Linear Seacrh
     adrUser user = L.firstUser; 
     while (user != nullptr){
         if (user->username == username){
@@ -144,7 +144,7 @@ adrRoom createRoom(int no, string type, int price){
     return r; 
 }
 
-void insertRoom(listRooms &R, adrRoom r){
+void insertRoom(listRooms &R, adrRoom r){ //InsertLast
     if (isEmptyRoom(R)){
         R.firstRoom = r;
         R.lastRoom = r;
@@ -156,7 +156,7 @@ void insertRoom(listRooms &R, adrRoom r){
     exportRoomsToCSV(R, "rooms.csv");
 }
 
-void deleteRoom(listRooms &R, int roomNumber){
+void deleteRoom(listRooms &R, int roomNumber){ //deleteAfter
     adrRoom r = R.firstRoom; 
     adrRoom prev = nullptr; 
 
@@ -166,17 +166,28 @@ void deleteRoom(listRooms &R, int roomNumber){
     } 
     
     if (r == nullptr){
-        cout << "Room not found!";
-    }else {
-        if (prev == nullptr){
-            R.firstRoom = r->next; 
-            if (R.firstRoom == nullptr){
-                R.lastRoom = prev; 
-            }
-        }
-        delete r; 
-        cout << "Room " << roomNumber << " Has been deleted!";
+        cout << "Room not found!\n";
+        return; 
     }
+    
+    // Room is found 
+    if (prev == nullptr){
+        // Delete first room
+        R.firstRoom = r->next; 
+        if (R.firstRoom == nullptr){
+            R.lastRoom = nullptr;  
+        }
+    } else {
+        // Delete middle or last room
+        prev->next = r->next;
+        if (r == R.lastRoom){
+            R.lastRoom = prev; 
+        }
+    }
+    
+    delete r; 
+    cout << "Room " << roomNumber << " has been deleted!\n";
+
     exportRoomsToCSV(R, "rooms.csv");
 }
 
@@ -221,8 +232,8 @@ void viewAvailableRooms(listRooms R){
     cout << "============================\n";
 }
 
-adrRoom findRoom(int no, listRooms &R){
-    adrRoom r = R.firstRoom; 
+adrRoom findRoom(int no, listRooms &R){ //LinearSearch
+    adrRoom r = R.firstRoom;  
     while (r != nullptr){
         if (r->roomNumber == no){
             return r; 
@@ -259,7 +270,7 @@ void makeReservation(listRooms &R, listUsers &L, adrUser u){
         newRes->next = nullptr;
         newRes->prev = nullptr;
         
-        // Insert reservation to user's list (at front)
+        // Insert reservation to user's list (insert first)
         if (u->firstRes == nullptr){
             u->firstRes = newRes;
         } else {
@@ -283,7 +294,7 @@ void makeReservation(listRooms &R, listUsers &L, adrUser u){
     exportReservationsToCSV(L, "reservations.csv");
 }
 
-void cancelReservation(listRooms &R, listUsers &L, adrUser u){
+void cancelReservation(listRooms &R, listUsers &L, adrUser u){ //delete after
     if (u->firstRes == nullptr){
         cout << "You have no reservations!\n";
     } else {
