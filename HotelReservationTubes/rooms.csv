@@ -1,0 +1,28 @@
+RoomNumber,Type,Price,Available
+101,Single,100,Yes
+102,Single ,100,Yes
+103,Double,125,Yes
+104,Family,150,Yes
+105,Single,100,Yes
+106,Double,125,Yes
+107,Family,150,Yes
+108,Single,100,Yes
+109,Deluxe,150,Yes
+110,Single,100,Yes
+201,Single,100,Yes
+202,Deluxe,150,Yes
+203,Family,150,Yes
+204,Single,100,Yes
+205,Double,125,Yes
+206,Family,150,Yes
+207,Deluxe,150,Yes
+208,Single,100,Yes
+209,Double,125,Yes
+210,Family,150,Yes
+301,Junior Suite,175,Yes
+302,Deluxe,150,Yes
+303,Deluxe,150,Yes
+304,Family,150,Yes
+305,Junior Suite,175,Yes
+306,Single,100,Yes
+307,Test,100,Yes

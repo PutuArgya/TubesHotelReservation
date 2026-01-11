@@ -1,4 +1,6 @@
 #include <iostream>
+#include <fstream>
+#include <sstream>
 #include "hotelreservation.h"
 
 using namespace std;
@@ -7,16 +9,20 @@ using namespace std;
 void createuserList(listUsers &L){
     L.firstUser = nullptr; 
     L.lastUser = nullptr; 
+    L.nextUserID = 1;
 }
 
 bool isEmptyUser (listUsers L){
     return (L.firstUser == nullptr); 
 } 
 
-adrUser registerUser(string name, string pass, bool admin){
-    adrUser p = new User; 
+adrUser registerUser(listUsers &L, string name, string pass, string email, string phone, bool admin){
+    adrUser p = new User;
+    p->userID = L.nextUserID;
     p->username = name; 
-    p->password = pass; 
+    p->password = pass;
+    p->email = email;
+    p->phone = phone;
     p->isAdmin = admin; 
     p->next = nullptr; 
     p->firstRes = nullptr; 
@@ -31,6 +37,9 @@ void insertUser(listUsers &L, adrUser p){
         L.lastUser->next = p; 
         L.lastUser = p; 
     }
+    L.nextUserID++;
+
+    exportUsersToCSV(L, "users.csv");
 }
 
 void removeUser(listUsers &L, listRooms &R, string username){
@@ -85,6 +94,10 @@ void removeUser(listUsers &L, listRooms &R, string username){
     delete user;
     cout << "User '" << username << "' removed successfully!\n";
     cout << "All reservations cancelled and rooms made available.\n";
+
+    exportUsersToCSV(L, "users.csv");
+    exportRoomsToCSV(R, "rooms.csv");
+    exportReservationsToCSV(L, "reservations.csv");
 }
 
 adrUser login(listUsers &L, string name, string pass){
@@ -98,7 +111,7 @@ adrUser login(listUsers &L, string name, string pass){
     return nullptr;    
 }
 
-adrUser findUsers(listUsers &L, string username){
+adrUser findUser(listUsers &L, string username){
     adrUser user = L.firstUser; 
     while (user != nullptr){
         if (user->username == username){
@@ -112,9 +125,9 @@ adrUser findUsers(listUsers &L, string username){
 
 // Rooms 
 
-void createRoomList(listRooms &L){
-    L.firstRoom = nullptr; 
-    L.lastRoom = nullptr; 
+void createRoomList(listRooms &R){
+    R.firstRoom = nullptr; 
+    R.lastRoom = nullptr; 
 }
 
 bool isEmptyRoom(listRooms R){
@@ -139,6 +152,8 @@ void insertRoom(listRooms &R, adrRoom r){
         R.lastRoom->next = r;
         R.lastRoom = r;
     }
+
+    exportRoomsToCSV(R, "rooms.csv");
 }
 
 void deleteRoom(listRooms &R, int roomNumber){
@@ -162,6 +177,7 @@ void deleteRoom(listRooms &R, int roomNumber){
         delete r; 
         cout << "Room " << roomNumber << " Has been deleted!";
     }
+    exportRoomsToCSV(R, "rooms.csv");
 }
 
 void viewRooms(listRooms &R){
@@ -174,41 +190,39 @@ void viewRooms(listRooms &R){
     while (r != nullptr){
         cout << "Room: " << r->roomNumber 
             << " | Type: " << r->type  
-            << " | Price: " << r->price << "per night"
+            << " | Price: " << r->price << " per night"
             << " | Available " << r->available << endl; 
         r = r->next; 
     }
      cout << "================================\n";
 }
 
-void viewAvailableRooms(listRooms &R, bool available){
+void viewAvailableRooms(listRooms R){
     if (isEmptyRoom(R)){
         cout << "\nNo rooms available.\n";
         return; 
-    }
-    bool isAvailable = false;
+    } 
+    bool hasAvailable = false;
     cout << "\n===== AVAILABLE ROOMS =====\n";
     adrRoom r = R.firstRoom; 
+    
     while (r != nullptr){
-        if (r->available){
-            cout << "Sorry, there are no available rooms right now!"; 
-        }else {
+        if (r->available){ 
             cout << "Room: " << r->roomNumber 
                 << " | Type: " << r->type  
-                << " | Price: " << r->price << "per night"
-                << " | Available " << r->available << endl; 
-            isAvailable = true; 
+                << " | Price: $" << r->price << "/night" << endl; 
+            hasAvailable = true; 
         }
         r = r->next; 
     }
-    if (!isAvailable){
-        cout << "Sorry, there are no room available for reservation right now!\n";
+    if (!hasAvailable){
+        cout << "Sorry, no rooms available for reservation right now!\n";
     }
     cout << "============================\n";
 }
 
-adrRoom findRoom(int no, listRooms &L){
-    adrRoom r = L.firstRoom; 
+adrRoom findRoom(int no, listRooms &R){
+    adrRoom r = R.firstRoom; 
     while (r != nullptr){
         if (r->roomNumber == no){
             return r; 
@@ -220,212 +234,139 @@ adrRoom findRoom(int no, listRooms &L){
 
 // Reservations
 
-void makeReservation(listRooms &L, adrUser u){
+void makeReservation(listRooms &R, listUsers &L, adrUser u){
+    int roomNo, nights;
+    
+    viewAvailableRooms(R);
+    
+    cout << "\nEnter room number to reserve: ";
+    cin >> roomNo;
+    
+    adrRoom room = findRoom(roomNo, R);
+    
+    if (room == nullptr){
+        cout << "Room not found!\n";
+    } else if (!room->available){
+        cout << "Room is not available!\n";
+    } else {
+        cout << "Enter number of nights: ";
+        cin >> nights;
+        
+        // Create new reservation
+        adrReservation newRes = new Reservation;
+        newRes->roomNumber = roomNo;
+        newRes->nights = nights;
+        newRes->next = nullptr;
+        newRes->prev = nullptr;
+        
+        // Insert reservation to user's list (at front)
+        if (u->firstRes == nullptr){
+            u->firstRes = newRes;
+        } else {
+            newRes->next = u->firstRes;
+            u->firstRes->prev = newRes;
+            u->firstRes = newRes;
+        }
+        
+        //  Room will become unavailable 
+        room->available = false;
+        
+        int totalCost = room->price * nights;
+        cout << "\n=== RESERVATION SUCCESS ===\n";
+        cout << "Room: " << roomNo << " (" << room->type << ")\n";
+        cout << "Nights: " << nights << "\n";
+        cout << "Total Cost: $" << totalCost << "\n";
+        cout << "===========================\n";
+    }
 
+    exportRoomsToCSV(R, "rooms.csv");
+    exportReservationsToCSV(L, "reservations.csv");
 }
 
-void cancelReservation(listRooms &L, adrUser u){
-
+void cancelReservation(listRooms &R, listUsers &L, adrUser u){
+    if (u->firstRes == nullptr){
+        cout << "You have no reservations!\n";
+    } else {
+        viewUserReservations(u);
+        
+        int roomNo;
+        cout << "\nEnter room number to cancel: ";
+        cin >> roomNo;
+        
+        adrReservation res = u->firstRes;
+        while (res != nullptr && res->roomNumber != roomNo){
+            res = res->next;
+        }
+        
+        if (res == nullptr){
+            cout << "Reservation not found!\n";
+        } else {
+            // Remove from user's reservation list
+            if (res->prev == nullptr){
+                u->firstRes = res->next;
+                if (u->firstRes != nullptr){
+                    u->firstRes->prev = nullptr;
+                }
+            } else {
+                res->prev->next = res->next;
+                if (res->next != nullptr){
+                    res->next->prev = res->prev;
+                }
+            }
+            // Room will become available 
+            adrRoom room = findRoom(roomNo, R);
+            if (room != nullptr){
+                room->available = true;
+            }
+            
+            delete res;
+            cout << "Reservation for room " << roomNo << " cancelled successfully!\n";
+        }
+    }
+    exportRoomsToCSV(R, "rooms.csv");
+    exportReservationsToCSV(L, "reservations.csv");
 }
 
 void viewUserReservations(adrUser u){
-
+    if (u->firstRes == nullptr){
+        cout << "\nYou have no reservations.\n";
+    } else {
+        cout << "\n===== YOUR RESERVATIONS =====\n";
+        adrReservation res = u->firstRes;
+        while (res != nullptr){
+            cout << "Room: " << res->roomNumber 
+                 << " | Nights: " << res->nights << endl;
+            res = res->next;
+        }
+        cout << "==============================\n";
+    }
 }
 
 void viewAllReservations(listUsers L){
-
-}
-
-// Menus
-
-void mainMenu(listUsers &L, listRooms &R){
-     int choice;
-    
-    do {
-        cout << "\n========== HOTEL RESERVATION SYSTEM ==========\n";
-        cout << "1. Register\n";
-        cout << "2. Login\n";
-        cout << "3. Exit\n";
-        cout << "==============================================\n";
-        cout << "Choice: ";
-        cin >> choice;
-        cin.ignore();
+    if (isEmptyUser(L)){
+        cout << "\nNo users in the system.\n";
+    } else {
+        cout << "\n========== ALL RESERVATIONS ==========\n";
+        adrUser user = L.firstUser;
+        bool hasReservations = false;
         
-        switch(choice){
-            case 1: {
-                string username, password;
-                char type;
-                cout << "\n=== REGISTRATION ===\n";
-                cout << "Register as (U)ser or (A)dmin? ";
-                cin >> type;
-                cin.ignore();
-                
-                bool isAdmin = (type == 'A' || type == 'a');
-                
-                if (isAdmin){
-                    string adminKey;
-                    cout << "Enter admin key: ";
-                    getline(cin, adminKey);
-                    
-                    if (adminKey != "ADMIN2025"){
-                        cout << "Invalid admin key! Registration failed.\n";
-                        break;
-                    }
+        while (user != nullptr){
+            if (user->firstRes != nullptr && !user->isAdmin){
+                cout << "\nUser: " << user->username << "\n";
+                adrReservation res = user->firstRes;
+                while (res != nullptr){
+                    cout << "  - Room: " << res->roomNumber 
+                         << " | Nights: " << res->nights << endl;
+                    res = res->next;
+                    hasReservations = true;
                 }
-                
-                cout << "Enter username: ";
-                getline(cin, username);
-                
-                if (findUser(L, username) != nullptr){
-                    cout << "Username has been taken!\n";
-                } else {
-                    cout << "Enter password: ";
-                    getline(cin, password);
-                    
-                    adrUser newUser = registerUser(username, password, isAdmin);
-                    insertUser(L, newUser);
-                    cout << (isAdmin ? "Admin" : "User") << " registration successful!\n";
-                }
-                break;
             }
-            case 2: {
-                string username, password;
-                cout << "\n=== LOGIN ===\n";
-                cout << "Enter username: ";
-                getline(cin, username);
-                cout << "Enter password: ";
-                getline(cin, password);
-                
-                adrUser user = login(L, username, password);
-                if (user == nullptr){
-                    cout << "Invalid username or password!\n";
-                } else {
-                    cout << "Login successful!\n";
-                    if (user->isAdmin){
-                        adminMenu(L, R, user);
-                    } else {
-                        userMenu(L, R, user);
-                    }
-                }
-                break;
-            }
-            case 3:
-                cout << "Thank you and good bye!\n";
-                break;
-            default:
-                cout << "Invalid choice!\n";
+            user = user->next;
         }
-    } while (choice != 3);
-}
-
-void adminMenu(listUsers &L, listRooms &R, adrUser admin){
-    int choice;
-    
-    do {
-        cout << "\n========== ADMIN MENU ==========\n";
-        cout << "1. Add Room\n";
-        cout << "2. Delete Room\n";
-        cout << "3. View All Rooms\n";
-        cout << "4. View All Reservations\n";
-        cout << "5. View All Users\n";
-        cout << "6. Remove User\n";
-        cout << "7. Logout\n";
-        cout << "================================\n";
-        cout << "Choice: ";
-        cin >> choice;
         
-        switch(choice){
-            case 1: {
-                int no, price;
-                string type;
-                cout << "Enter room number: ";
-                cin >> no;
-                cin.ignore();
-                cout << "Enter room type: ";
-                getline(cin, type);
-                cout << "Enter price per night: $";
-                cin >> price;
-                
-                adrRoom r = createRoom(no, type, price);
-                insertRoom(R, r);
-                cout << "Room added!\n";
-                break;
-            }
-            case 2: {
-                int no;
-                viewRooms(R);
-                cout << "Enter room number to delete: ";
-                cin >> no;
-                deleteRoom(R, no);
-                break;
-            }
-            case 3:
-                viewRooms(R);
-                break;
-            case 4:
-                viewAllReservations(L);
-                break;
-            case 5: {
-                cout << "\n========== ALL USERS ==========\n";
-                adrUser user = L.firstUser;
-                while (user != nullptr){
-                    cout << "Username: " << user->username 
-                         << " | Type: " << (user->isAdmin ? "Admin" : "User") << endl;
-                    user = user->next;
-                }
-                cout << "================================\n";
-                break;
-            }
-            case 6: {
-                string username;
-                cin.ignore();
-                cout << "Enter username to remove: ";
-                getline(cin, username);
-                removeUser(L, R, username);
-                break;
-            }
-            case 7:
-                cout << "Logging out...\n";
-                break;
-            default:
-                cout << "Invalid choice!\n";
+        if (!hasReservations){
+            cout << "No reservations found.\n";
         }
-    } while (choice != 7);
-}
-
-void userMenu(listUsers &L, listRooms &R, adrUser user){
-    int choice;
-    
-    do {
-        cout << "\n========== USER MENU ==========\n";
-        cout << "Welcome, " << user->username << "\n";
-        cout << "1. View Available Rooms\n";
-        cout << "2. Make Reservation\n";
-        cout << "3. View My Reservations\n";
-        cout << "4. Cancel Reservation\n";
-        cout << "5. Logout\n";
-        cout << "================================\n";
-        cout << "Choice: ";
-        cin >> choice;
-        
-        switch(choice){
-            case 1:
-                viewAvailableRooms(R);
-                break;
-            case 2:
-                makeReservation(R, user);
-                break;
-            case 3:
-                viewUserReservations(user);
-                break;
-            case 4:
-                cancelReservation(R, user);
-                break;
-            case 5:
-                cout << "Logging out...\n";
-                break;
-            default:
-                cout << "Invalid choice!\n";
-        }
-    } while (choice != 5);
+        cout << "======================================\n";
+    }
 }

@@ -1,6 +1,8 @@
 #ifndef HOTEL_H
 #define HOTEL_H
 #include <iostream>
+#include <fstream>
+#include <sstream>
 #include <string>
 
 using namespace std;
@@ -17,8 +19,11 @@ struct Reservation {
 };
 
 struct User {
+    int userID;
     string username;
     string password;
+    string email;
+    string phone;
     bool isAdmin;
     adrReservation firstRes;
     adrUser next;
@@ -35,6 +40,7 @@ struct Room {
 struct listUsers {
     adrUser firstUser; 
     adrUser lastUser;
+    int nextUserID;
 };
 
 struct listRooms {
@@ -49,26 +55,26 @@ struct listReservation {
 
 // User
 void createuserList(listUsers &L); 
-adrUser registerUser(string name, string pass, bool admin);
+adrUser registerUser(listUsers &L, string name, string pass, string email, string phone, bool admin);
 void insertUser(listUsers &L, adrUser p);
 void removeUser(listUsers &L, listRooms &R, string username);
-adrUser login(string u, string p);
+adrUser login(listUsers &L, string username, string pass);
 bool isEmptyUser(listUsers L); 
 adrUser findUser(listUsers &L, string username);
 
 // Room
-void createRoomList(listRooms &L);
+void createRoomList(listRooms &R);
 adrRoom createRoom(int no, string type, int price); 
-void insertRoom(listRooms &L, adrRoom r);
-void deleteRoom(listRooms &L, int roomNumber);
+void insertRoom(listRooms &R, adrRoom r);
+void deleteRoom(listRooms &R, int roomNumber);
 void viewRooms(listRooms &R);
-void viewAvailableRooms(listRooms L);
-adrRoom findRoom(int no, listRooms &L);
+void viewAvailableRooms(listRooms R);
+adrRoom findRoom(int no, listRooms &R);
 bool isEmptyRoom(listRooms R); 
 
 // Reservation
-void makeReservation(listRooms &L, adrUser u);
-void cancelReservation(listRooms &L, adrUser u);
+void makeReservation(listRooms &R, listUsers  &L, adrUser u);
+void cancelReservation(listRooms &R, listUsers &L, adrUser u);
 void viewUserReservations(adrUser u);
 void viewAllReservations(listUsers L);
 
@@ -77,6 +83,13 @@ void mainMenu(listUsers &L, listRooms &R);
 void adminMenu(listUsers &L, listRooms &R, adrUser Admin);
 void userMenu(listUsers &L, listRooms &R, adrUser User);
 
-//Mungkin nambah lagi...
+// CSV
+void exportUsersToCSV(listUsers L, string filename);
+void exportRoomsToCSV(listRooms L, string filename);
+void exportReservationsToCSV(listUsers L, string filename);
+void importRoomsFromCSV(listRooms &R, string filename);
+void importUsersFromCSV(listUsers &L, string filename); 
+void importReservationFromCSV(listUsers &L, string filename); 
+void loadAllData(listUsers &L, listRooms &R); 
 
 #endif
